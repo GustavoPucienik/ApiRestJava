@@ -7,13 +7,17 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 @Service
 public class AppUserService {
 
   private final AppUserRepository repository;
+  private final BCryptPasswordEncoder passwordEncoder;
 
   public AppUserService(AppUserRepository repository) {
     this.repository = repository;
+    this.passwordEncoder = new BCryptPasswordEncoder();
   }
 
   // Retorna todos os usuários
@@ -27,7 +31,13 @@ public class AppUserService {
   }
 
   // Cria ou atualiza usuário
-  public AppUser save(AppUser user) {
+  public AppUser save(AppUser user){
+    if (repository.existsByEmail(user.getEmail())) {
+      throw new IllegalArgumentException("E-mail já cadastrado");
+    }
+    if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+      user.setPassword(passwordEncoder.encode(user.getPassword()));
+    }
     return repository.save(user);
   }
 
